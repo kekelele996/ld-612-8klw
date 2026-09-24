@@ -1,7 +1,11 @@
-import { computed, ref } from "vue";
-export function useTextDiff<T>(rows: T[] = []) {
-  const page = ref(1);
-  const pageSize = 8;
-  const pageRows = computed(() => rows.slice((page.value - 1) * pageSize, page.value * pageSize));
-  return { page, pageSize, pageRows, total: rows.length };
+import { computed } from "vue";
+import { diffChars, similarity, countChanged, type TextSegment } from "../utils/textLcs";
+
+// 对比视图使用：两侧原文行内高亮片段 + 相似度 + 增删字数
+export function useTextDiff(oldText: () => string, newText: () => string) {
+  const segments = computed<TextSegment[]>(() => diffChars(oldText(), newText()));
+  const ratio = computed(() => similarity(oldText(), newText()));
+  const changed = computed(() => countChanged(segments.value));
+
+  return { segments, ratio, changed };
 }

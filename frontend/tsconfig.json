@@ -8,6 +8,8 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": false,
     "lib": [
       "ES2021",
       "DOM"

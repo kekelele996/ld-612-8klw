@@ -4,5 +4,7 @@ export interface PolicyDocument {
   version_label: string;
   raw_text: string;
   normalized_sections: string;
+  content_hash: string;
+  section_count: number;
   imported_at: string;
 }

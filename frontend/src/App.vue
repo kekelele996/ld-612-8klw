@@ -1,26 +1,52 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { routes } from "./router/routes";
-import { mockData } from "./mocks/seedData";
-import StatusBadge from "./components/common/StatusBadge.vue";
-import StatCard from "./components/common/StatCard.vue";
-const active = ref<string>(routes[0]?.route ?? "/dashboard");
-const current = computed(() => routes.find((route) => route.route === active.value) ?? routes[0]);
-const entries = Object.entries(mockData);
+import { onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { navRoutes } from "./router/routes";
+import { usePolicyDocumentStore } from "./stores/PolicyDocumentStore";
+import { usePolicySectionStore } from "./stores/PolicySectionStore";
+import { useDiffResultStore } from "./stores/DiffResultStore";
+import { useReviewNoteStore } from "./stores/ReviewNoteStore";
+
+const route = useRoute();
+const documentStore = usePolicyDocumentStore();
+const sectionStore = usePolicySectionStore();
+const diffStore = useDiffResultStore();
+const noteStore = useReviewNoteStore();
+
+// 应用启动即从 localStorage 恢复全部业务数据
+onMounted(async () => {
+  await Promise.all([
+    documentStore.load(),
+    sectionStore.load(),
+    diffStore.load(),
+    noteStore.load()
+  ]);
+});
 </script>
 
 <template>
   <div class="shell">
-    <aside>
-      <div class="brand">隐私政策差异对比器</div>
-      <nav>
-        <button v-for="route in routes" :key="route.route" :class="{ active: active === route.route }" @click="active = route.route">{{ route.name }}</button>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">隐私政策差异对比器</div>
+        <div class="brand-sub">policy-diff · 本地审阅</div>
+      </div>
+      <nav class="nav">
+        <RouterLink
+          v-for="item in navRoutes"
+          :key="item.route"
+          :to="item.route"
+          class="nav-item"
+          :class="{ active: route.path === item.route }"
+        >
+          <span class="nav-name">{{ item.name }}</span>
+          <span class="nav-desc">{{ item.desc }}</span>
+        </RouterLink>
       </nav>
+      <div class="sidebar-foot">数据仅保存在本浏览器 localStorage</div>
     </aside>
     <main class="page">
-      <section class="page-head"><div><p class="eyebrow">policy-diff</p><h1>{{ current?.name }}</h1></div><StatusBadge value="LOCAL_DATA" /></section>
-      <section class="metrics"><StatCard label="核心模型" :value="entries.length" /><StatCard label="共享枚举" :value="3" /><StatCard label="本地记录" :value="entries.reduce((s, [, rows]) => s + rows.length, 0)" /></section>
-      <section class="workbench"><div class="panel wide"><h2>业务数据</h2><article class="row" v-for="[key, rows] in entries" :key="key"><strong>{{ key }}</strong><span>{{ rows.length }} 条</span><StatusBadge value="READY" /></article></div><div class="panel"><h2>联动检查</h2><p>页面、store、API、构造器、日志模板和枚举常量均按提示词拆分。</p></div></section>
+      <RouterView />
     </main>
   </div>
 </template>

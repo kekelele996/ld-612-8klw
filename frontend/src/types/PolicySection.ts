@@ -1,3 +1,5 @@
+import type { RiskAssessment } from "./RiskAssessment";
+
 export interface PolicySection {
   id: number;
   document_id: number;
@@ -5,5 +7,10 @@ export interface PolicySection {
   heading: string;
   content: string;
   category: string;
-  risk_level: string;
+  order_index: number;
+  risk_level: RiskAssessment["level"];
+  risk_score: number;
+  risk_hits: RiskAssessment["hits"];
+  risk_assessed_at: string;
+  risk_manual: boolean;
 }
