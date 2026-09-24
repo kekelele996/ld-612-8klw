@@ -1,26 +1,70 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import { routes } from "./router/routes";
-import { mockData } from "./mocks/seedData";
-import StatusBadge from "./components/common/StatusBadge.vue";
-import StatCard from "./components/common/StatCard.vue";
-const active = ref<string>(routes[0]?.route ?? "/dashboard");
-const current = computed(() => routes.find((route) => route.route === active.value) ?? routes[0]);
-const entries = Object.entries(mockData);
+import { useReviewNoteStore } from "./stores/ReviewNoteStore";
+import { storeToRefs } from "pinia";
+
+const route = useRoute();
+const noteStore = useReviewNoteStore();
+const { openRows } = storeToRefs(noteStore);
+noteStore.load();
+
+const navItems = computed(() =>
+  routes
+    .filter((item) => typeof item.path === "string" && item.name)
+    .map((item) => ({ path: item.path as string, name: item.name as string }))
+);
+
+const isActive = (path: string) => (path === "/documents" ? route.path === "/" || route.path === "/documents" : route.path.startsWith(path));
 </script>
 
 <template>
   <div class="shell">
     <aside>
-      <div class="brand">隐私政策差异对比器</div>
+      <div class="brand">隐私政策<br />差异对比器</div>
+      <p class="subtitle">policy-diff · 本地合规审阅</p>
       <nav>
-        <button v-for="route in routes" :key="route.route" :class="{ active: active === route.route }" @click="active = route.route">{{ route.name }}</button>
+        <RouterLink v-for="item in navItems" :key="item.path" :to="item.path" class="nav-item" :class="{ active: isActive(item.path) }">
+          {{ item.name }}
+          <span v-if="item.path === '/review' && openRows.length" class="dot">{{ openRows.length }}</span>
+        </RouterLink>
       </nav>
+      <div class="aside-foot">
+        <span class="badge">数据仅存本地浏览器</span>
+      </div>
     </aside>
     <main class="page">
-      <section class="page-head"><div><p class="eyebrow">policy-diff</p><h1>{{ current?.name }}</h1></div><StatusBadge value="LOCAL_DATA" /></section>
-      <section class="metrics"><StatCard label="核心模型" :value="entries.length" /><StatCard label="共享枚举" :value="3" /><StatCard label="本地记录" :value="entries.reduce((s, [, rows]) => s + rows.length, 0)" /></section>
-      <section class="workbench"><div class="panel wide"><h2>业务数据</h2><article class="row" v-for="[key, rows] in entries" :key="key"><strong>{{ key }}</strong><span>{{ rows.length }} 条</span><StatusBadge value="READY" /></article></div><div class="panel"><h2>联动检查</h2><p>页面、store、API、构造器、日志模板和枚举常量均按提示词拆分。</p></div></section>
+      <RouterView />
     </main>
   </div>
 </template>
+
+<style scoped>
+.shell { min-height: 100vh; display: grid; grid-template-columns: 248px 1fr; }
+aside { background: #223126; color: #f5f1e6; padding: 26px 18px; display: flex; flex-direction: column; gap: 6px; }
+.brand { font-size: 19px; font-weight: 800; line-height: 1.35; }
+.subtitle { margin: 0 0 18px; color: #b9c0b0; font-size: 12px; letter-spacing: .04em; }
+nav { display: grid; gap: 6px; }
+.nav-item {
+  display: flex; align-items: center; justify-content: space-between;
+  color: #d8dccf; text-decoration: none;
+  padding: 10px 14px; border-radius: 8px; font-size: 14px;
+}
+.nav-item:hover { background: #2f4235; color: #fff; }
+.nav-item.active { background: #f5f1e6; color: #223126; font-weight: 700; }
+.nav-item .dot {
+  background: #d39b46; color: #223126; border-radius: 999px;
+  min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; padding: 0 6px;
+}
+.aside-foot { margin-top: auto; }
+.aside-foot .badge { font-size: 11px; color: #9fb09f; border: 1px solid #3a4f3e; border-radius: 999px; padding: 3px 10px; display: inline-block; }
+.page { padding: 26px 30px 40px; background: #eef1e8; min-width: 0; }
+@media (max-width: 760px) {
+  .shell { grid-template-columns: 1fr; }
+  aside { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+  nav { display: flex; flex-wrap: wrap; }
+  .subtitle, .aside-foot { display: none; }
+}
+</style>

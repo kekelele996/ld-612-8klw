@@ -1,18 +1,2 @@
-export const routes = [
-  {
-    "name": "文档导入",
-    "route": "/documents"
-  },
-  {
-    "name": "版本对比",
-    "route": "/compare"
-  },
-  {
-    "name": "风险标注",
-    "route": "/risks"
-  },
-  {
-    "name": "审阅清单",
-    "route": "/review"
-  }
-] as const;
+/** 路由表常量：App 侧边导航与 router 共用同一份定义 */
+export { routes } from "./index";
